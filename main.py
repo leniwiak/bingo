@@ -77,7 +77,24 @@ while True:
         break
     print(OKBLUE+url_to_index+ENDC)
     if not going_back:
-        driver.get(url_to_index)
+        try:
+            driver.get(url_to_index)
+        except Exception as err:
+            print(FAIL+"Driver error: ("+type(err).__name__+")"+ENDC)
+            # Go back in history
+            old_url = driver.current_url
+            driver.back()
+            new_url = driver.current_url
+            # Page did not change even after going back? That's not good... End the program.
+            if old_url == new_url:
+                print(FAIL+"There's no page to go back to!"+ENDC)
+                break
+            else:
+                # Index previous website once again
+                url_to_index=new_url
+                # Singalize that we're going back
+                going_back = True
+
 
     # Wait 2 seconds
     driver.implicitly_wait(0.5)
@@ -138,7 +155,7 @@ while True:
             links[index] = href
             index+=1
         except:
-            print("AJSJA "+href)
+            print("Failed to get 'href' attribute")
             links.pop(index)
 
     index = 0
