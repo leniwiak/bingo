@@ -100,24 +100,29 @@ while True:
     driver.implicitly_wait(0.5)
 
     # Get title and description
-    title = driver.title
+    try:
+        title = driver.title
+    except Exception as err:
+        print(WARNING+"Failed to get contents of <title>: "+type(err).__name__+ENDC)
+        title = "Untitled"
     if title == None:
         title = "Untitled"
 
     try:
-        paragraph_tag = driver.find_element(By.TAG_NAME, "p")
-    except:
+        paragraph_tag = driver.find_element(By.TAG_NAME, "p").text
+    except Exception as err:
+        print(WARNING+"Failed to get contents of <p>: "+type(err).__name__+ENDC)
         paragraph_tag = ""
-
     try:
-        header_tag = driver.find_element(By.TAG_NAME, "h1")
-    except:
+        header_tag = driver.find_element(By.TAG_NAME, "h1").text
+    except Exception as err:
+        print(WARNING+"Failed to get contents of <h1>: "+type(err).__name__+ENDC)
         header_tag = ""
 
     if paragraph_tag != None or paragraph_tag != "":
-        desc = paragraph_tag.text
+        desc = paragraph_tag
     elif header_tag != None or header_tag != "":
-        desc = header_tag.text
+        desc = header_tag
     else:
         desc = ""
 
