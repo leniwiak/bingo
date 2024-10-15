@@ -10,10 +10,17 @@
 	<header>
 		<h1>Bingo!</h1>
 		<form method="get">
-			<input type="text" name="s" required max="169" placeholder="What's on your mind?">
+			<input type="text" name="s" required max="169" id="inputbox">
 			<input type="submit" value="Search">
 		</form>
 	</header>
+
+	<script>
+		var items = Array("What's on your mind?", "Anything interesting?", "Type something here", "A query of the day is...", "Describe your intentions", "Search the internet", "What's going on?", "What do you like?", "Tell me what to do", "What you want to discover?", "Anywhere to go?", "Wanna surf?", "Browse the web");
+		var item = items[Math.floor(Math.random()*items.length)];
+		document.getElementById("inputbox").placeholder = item;
+	</script>
+
 	<main>
 		<?php
 		if (isset($_GET['s'])) {
