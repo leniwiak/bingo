@@ -21,6 +21,7 @@ header {
 	display: block;
 	text-align: center;
 	padding: 2% 0 2% 0;
+	height: 100%;
 }
 
 main {
@@ -58,6 +59,10 @@ input[type=text]:hover {
 
 input {
 	outline: none;
+}
+
+table {
+	width: 85%;
 }
 
 #web_result {

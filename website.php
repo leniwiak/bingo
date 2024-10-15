@@ -44,9 +44,13 @@
 				echo "<tr>";
 					echo "<td id=\"web_result\">";
 					echo "<a href=\"".$row['link']."\">";
-						echo "<h2>".$row['title']."</h2>";
+						if($row['title']!="") {
+							echo "<h2>".$row['title']."</h2>";
+						} else {
+							echo "<h2>No title provided.</h2>";
+						}
 						echo "<a href=\"".$row['link']."\" id=\"url\">".$row['link']."</a>";
-						if($desc!="") {
+						if($row['desc']!="") {
 							echo "<p>".$row['desc']."</p>";
 						} else {
 							echo "<p>Sorry. No description provided.</p>";
