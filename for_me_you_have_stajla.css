@@ -10,6 +10,7 @@
 body {
 	color: #ddd;
 	font-family: "RobotoSlab", "Helvetica", "Tahoma", "Arial";
+	background-color: #111;
 }
 
 header h1 {
@@ -26,6 +27,17 @@ main {
 	background-color: #111;
 	padding-top: 2%;
 	padding-bottom: 2%;
+	height: 100%;
+}
+
+input[type=submit] {
+	color: white;
+	background-color: #000;
+	border: 5px #000 solid;
+}
+input[type=submit]:hover {
+	background-color: #0b57d0;
+	border: 5px #0b57d0 solid;
 }
 
 input[type=text] {
@@ -50,13 +62,15 @@ input {
 
 #web_result {
 	display: block;
-	width: 90%;
 	margin: 0 5% 0 5%;
+	border: 2px solid #111;
 	padding: 1% 1% 1% 1%;
+	width: 100%;
 }
 
 #web_result:hover {
 	background-color: #222;
+	border: 2px solid #999;
 }
 
 a:link {
