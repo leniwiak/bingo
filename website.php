@@ -20,12 +20,12 @@
 			$search = $_GET['s'];
 			if (strlen($search) < 3) {
 				echo "<h2>Oopsie!</h2>";
-				echo "<p>Try typing more than two letters, please.</p>"
+				echo "<p>Try typing more than two letters, please.</p>";
 				die();
 			};
 			if (strlen($search) > 169) {
 				echo "<h2>Oopsie!</h2>";
-				echo "<p>You request exceeds allowed text length! Please, make your query a bit shorter.</p>"
+				echo "<p>You request exceeds allowed text length! Please, make your query a bit shorter.</p>";
 				die();
 			};
 			$db = new SQLite3("./searchindex.db");
