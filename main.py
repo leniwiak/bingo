@@ -105,6 +105,8 @@ while True:
     # Get title and description
     try:
         title = driver.title
+        # Strip trailing newlines
+        title = title.strip()
     except Exception as err:
         print(WARNING+"Failed to get contents of <title>: "+type(err).__name__+ENDC)
         title = "Untitled"
@@ -127,11 +129,16 @@ while True:
         desc = paragraph_tag
     if header_tag != None or header_tag != "":
         desc = header_tag
+    desc = desc.strip()
 
     # Save current website to the database
     # Skip saving (and do not print any error) if the script just started and website is already in db.
-    if not going_back or (first_iter and not exists(link=link)):
+    if first_iter and exists(link=url_to_index):
+        print("This site has been already added to the database but the script just started. It's probably okay to just skip saving.")
+    elif not going_back:
         save(title=title, desc=desc, link=url_to_index)
+
+    # Reset first_iter to False
     if first_iter:
         first_iter = False
 
