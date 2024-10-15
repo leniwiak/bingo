@@ -33,7 +33,7 @@ UNDERLINE = '\033[4m'
 options = webdriver.ChromeOptions()
 options.page_load_strategy = 'normal' # Wait until website fully loads
 options.accept_insecure_certs = False
-options.timeouts = { 'script': 5000, 'pageLoad' : 5000 } # Set a timeout to 5 seconds
+options.timeouts = { 'script': 10000, 'pageLoad' : 10000 } # Set a timeout to 5 seconds
 options.unhandled_prompt_behavior = 'accept'
 options.add_argument("--incognito --disable-features=Translate --disable-extensions --mute-audio --no-default-browser-check --no-first-run --disable-search-engine-choice-screen --deny-permission-prompts --disable-external-intent-requests --disable-notifications --enable-automation -blink-settings=imagesEnabled=false")
 
@@ -69,7 +69,7 @@ except:
 
 url_to_index = sys.argv[1]
 going_back = False
-
+first_iter = True
 
 # Go to specified URL
 while True:
@@ -79,6 +79,9 @@ while True:
     if not going_back:
         try:
             driver.get(url_to_index)
+        except TimeoutException as err:
+            print(WARNING+"Timeout occured!"+ENDC)
+            continue
         except Exception as err:
             print(FAIL+"Driver error: ("+type(err).__name__+")"+ENDC)
             # Go back in history
@@ -119,16 +122,18 @@ while True:
         print(WARNING+"Failed to get contents of <h1>: "+type(err).__name__+ENDC)
         header_tag = ""
 
+    desc = ""
     if paragraph_tag != None or paragraph_tag != "":
         desc = paragraph_tag
-    elif header_tag != None or header_tag != "":
+    if header_tag != None or header_tag != "":
         desc = header_tag
-    else:
-        desc = ""
 
     # Save current website to the database
-    if not going_back:
+    # Skip saving (and do not print any error) if the script just started and website is already in db.
+    if not going_back or (first_iter and not exists(link=link)):
         save(title=title, desc=desc, link=url_to_index)
+    if first_iter:
+        first_iter = False
 
     going_back = False
 
