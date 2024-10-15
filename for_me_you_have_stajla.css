@@ -1,0 +1,75 @@
+@font-face {
+	font-family: RobotoSlab;
+	src: url(assets/Roboto_Slab/RobotoSlab-VariableFont_wght.ttf);
+}
+
+* {
+	margin: 0;
+}
+
+body {
+	color: #ddd;
+	font-family: "RobotoSlab", "Helvetica", "Tahoma", "Arial";
+}
+
+header h1 {
+	margin-bottom: 1%;
+}
+header {
+	background-color: #000;
+	display: block;
+	text-align: center;
+	padding: 2% 0 2% 0;
+}
+
+main {
+	background-color: #111;
+	padding-top: 2%;
+}
+
+input[type=text] {
+	font-size: 150%;
+	background-color: #000;
+	color: white;
+	border: none;
+	border-bottom-color: #000;
+	border-bottom-style: solid;
+	border-bottom-width: 1%;
+	width: 80%;
+}
+input[type=text]:hover {
+	border-bottom-color: #0b57d0;
+	border-bottom-style: solid;
+	border-bottom-width: 1%;
+}
+
+input {
+	outline: none;
+}
+
+#web_result {
+	display: block;
+	width: 90%;
+	margin: 0 5% 0 5%;
+	padding: 1% 1% 1% 1%;
+}
+
+#web_result:hover {
+	background-color: #222;
+}
+
+a:link {
+	color: #ddd;
+	text-decoration: none;
+}
+a:visited {
+	color: #ddd;
+}
+
+#url {
+	color: #0A0;
+}
+#url:visited {
+	color: #0F0;
+}
+
