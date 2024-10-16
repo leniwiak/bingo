@@ -198,10 +198,16 @@ while True:
         # For example, a link may point to non-existing website that returns 404 error code.
         # This is obviously bad. Skip it.
         try:
-            status_code = int(requests.head(link, timeout=10, allow_redirects=True).status_code)
+            response = requests.head(link, timeout=10, allow_redirects=True)
+            status_code = int(response.status_code)
+            content_type = response.headers['content-type']
             print(OKBLUE+"("+str(status_code)+") "+ENDC, end="")
+            if "text/" not in content_type:
+                print(FAIL+"Wrong content-type! ("+str(content_type)+")"+ENDC)
+                links.pop(index)
+                continue
             if status_code not in good_status_codes:
-                print(FAIL+"Returned wrong status code! ("+str(status_code)+")"+ENDC)
+                print(FAIL+"Wrong status code! ("+str(status_code)+")"+ENDC)
                 links.pop(index)
                 continue
         except Exception as err:
