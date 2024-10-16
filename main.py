@@ -1,4 +1,5 @@
 import sys
+import re
 import requests
 import sqlite3
 import datetime
@@ -19,6 +20,10 @@ cur = con.cursor()
 codes = requests.codes
 good_status_codes = [codes.ok, codes.temporary_moved, codes.moved]
 
+# Some default settings that can be changed by CLI arguments
+keep_domain = False # Collect links only for initial domain
+no_follow = False # Do not recurse into child links
+
 # COLORS!!!
 HEADER = '\033[95m'
 OKBLUE = '\033[94m'
@@ -37,6 +42,7 @@ options.accept_insecure_certs = False
 options.timeouts = { 'script': 10000, 'pageLoad' : 10000 } # Set a timeout to 5 seconds
 options.unhandled_prompt_behavior = 'accept'
 options.add_argument("--headless='new' --incognito --disable-features=Translate --disable-extensions --mute-audio --no-default-browser-check --no-first-run --disable-search-engine-choice-screen --deny-permission-prompts --disable-external-intent-requests --disable-notifications --enable-automation -blink-settings=imagesEnabled=false")
+
 
 # Start session
 driver = webdriver.Chrome(options=options)
@@ -80,7 +86,39 @@ except:
     print("Please, add an argument specifying the full URL to start crawling from like 'https://example.com'.")
     exit(1)
 
+# That doesn't look good. Clean it up a bit later.
+try:
+    additional_arg = sys.argv[2]
+    match additional_arg:
+        case "keep_domain":
+            keep_domain = True
+        case "no_follow":
+            no_follow = True
+except:
+    pass
+try:
+    additional_arg = sys.argv[2]
+    match additional_arg:
+        case "keep_domain":
+            keep_domain = True
+        case "no_follow":
+            no_follow = True
+except:
+    pass
+try:
+    additional_arg = sys.argv[3]
+    match additional_arg:
+        case "keep_domain":
+            keep_domain = True
+        case "no_follow":
+            no_follow = True
+except:
+    pass
+
 url_to_index = sys.argv[1]
+init_website = re.sub(r'^.*?://', '', url_to_index)
+if keep_domain:
+    print("Keeping domain:",init_website)
 first_iter = True
 
 # Go to specified URL
@@ -98,8 +136,6 @@ while True:
         # Go back in history
         goback()
 
-
-    # Wait 2 seconds
     driver.implicitly_wait(0.25)
 
     # Get title and description
@@ -166,8 +202,6 @@ while True:
     while index < len(links):
         link = links[index]
 
-        print(link,'\b: ', end='')
-
         if link == None:
             print(FAIL+"No link in <a> tag!"+ENDC)
             links.pop(index)
@@ -177,7 +211,10 @@ while True:
         link, sep, tail = link.partition('#')
         link, sep, tail = link.partition('?')
         link, sep, tail = link.partition('&')
+        link, sep, tail = link.partition('%')
         links[index] = link
+
+        print(link,'\b: ', end='')
 
         if link == "":
             print(FAIL+"Link is empty!"+ENDC)
@@ -187,10 +224,14 @@ while True:
         if "javascript:" in link:
             print(FAIL+"Contains 'javascript:' text!"+ENDC)
             links.pop(index)
-            continue
 
         if exists(link=link):
             print(WARNING+"Already indexed!"+ENDC)
+            links.pop(index)
+            continue
+
+        if keep_domain and init_website not in link:
+            print(WARNING+"Rejected by 'keep_domain' policy!")
             links.pop(index)
             continue
 
@@ -215,6 +256,7 @@ while True:
                 links.pop(index)
                 continue
 
+
         # Nothing wrong until this point? The link seems to be good!
         print(OKGREEN+"OK"+ENDC)
         index+=1
@@ -225,7 +267,11 @@ while True:
         goback()
     else:
         for link in links:
-            url_to_index=link
+            if not no_follow:
+                url_to_index=link
+            else:
+                print("Not following any link. That's it")
+                exit(0)
 
 # End browser session
 driver.quit()
