@@ -65,6 +65,7 @@ def goback():
     if old_url == new_url or new_url == "data:,":
         print(FAIL+"No page to go back to!"+ENDC)
         exit(1)
+    url_to_index=new_url
 
 def exists(link):
     result = cur.execute("SELECT link FROM searches WHERE link=?", (link,))
