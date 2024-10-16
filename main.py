@@ -55,6 +55,17 @@ def save(title, desc, link):
     cur.execute("INSERT INTO 'searches' (title, desc, link, date) VALUES(?, ?, ?, ?)", (title, desc, link, date))
     con.commit()
 
+def goback():
+    print("Going back...")
+    old_url = driver.current_url
+    driver.back()
+    new_url = driver.current_url
+    print("Old URL: "+old_url)
+    print("New URL: "+new_url)
+    if old_url == new_url or new_url == "data:,":
+        print(FAIL+"No page to go back to!"+ENDC)
+        exit(1)
+
 def exists(link):
     result = cur.execute("SELECT link FROM searches WHERE link=?", (link,))
     return len(cur.fetchall()) != 0
@@ -69,7 +80,6 @@ except:
     exit(1)
 
 url_to_index = sys.argv[1]
-going_back = False
 first_iter = True
 
 # Go to specified URL
@@ -77,27 +87,15 @@ while True:
     if url_to_index == "data:,":
         break
     print(OKBLUE+url_to_index+ENDC)
-    if not going_back:
-        try:
-            driver.get(url_to_index)
-        except TimeoutException:
-            print(WARNING+"Timeout occured!"+ENDC)
-            continue
-        except Exception as err:
-            print(FAIL+"Driver error occured: ("+type(err).__name__+")"+ENDC)
-            # Go back in history
-            old_url = driver.current_url
-            driver.back()
-            new_url = driver.current_url
-            # Page did not change even after going back? That's not good... End the program.
-            if old_url == new_url:
-                print(FAIL+"There's no page to go back to!"+ENDC)
-                break
-            else:
-                # Index previous website once again
-                url_to_index=new_url
-                # Singalize that we're going back
-                going_back = True
+    try:
+        driver.get(url_to_index)
+    except TimeoutException:
+        print(WARNING+"Timeout occured!"+ENDC)
+        continue
+    except Exception as err:
+        print(FAIL+"Driver error occured: ("+type(err).__name__+")"+ENDC)
+        # Go back in history
+        goback()
 
 
     # Wait 2 seconds
@@ -136,14 +134,12 @@ while True:
     # Skip saving (and do not print any error) if the script just started and website is already in db.
     if first_iter and exists(link=url_to_index):
         print("This site has been already added to the database but the script just started. It's probably okay to just skip saving.")
-    elif not going_back:
+    else:
         save(title=title, desc=desc, link=url_to_index)
 
     # Reset first_iter to False
     if first_iter:
         first_iter = False
-
-    going_back = False
 
     # Get list of links
     try:
@@ -151,18 +147,7 @@ while True:
     except:
         print(WARNING+"No links found on this page"+ENDC)
         # Go back in history
-        old_url = driver.current_url
-        driver.back()
-        new_url = driver.current_url
-        # Page did not change even after going back? That's not good... End the program.
-        if old_url == new_url:
-            print(FAIL+"There's no page to go back to!"+ENDC)
-            break
-        else:
-            # Index previous website once again
-            url_to_index=new_url
-            # Singalize that we're going back
-            going_back = True
+        goback()
 
 
     # Modify 'links' to only contain values of 'href' attributes
@@ -230,18 +215,7 @@ while True:
     if len(links) == 0:
         print(WARNING+"There are links on this page, but none of them are usefull."+ENDC)
         # Go back in history
-        old_url = driver.current_url
-        driver.back()
-        new_url = driver.current_url
-        # Page did not change even after going back? That's not good... End the program.
-        if old_url == new_url:
-            print(FAIL+"There's no page to go back to!"+ENDC)
-            break
-        else:
-            # Index previous website once again
-            url_to_index=new_url
-            # Singalize that we're going back
-            going_back = True
+        goback()
     else:
         for link in links:
             url_to_index=link
