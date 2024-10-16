@@ -36,7 +36,7 @@ options.page_load_strategy = 'normal' # Wait until website fully loads
 options.accept_insecure_certs = False
 options.timeouts = { 'script': 10000, 'pageLoad' : 10000 } # Set a timeout to 5 seconds
 options.unhandled_prompt_behavior = 'accept'
-options.add_argument("--incognito --disable-features=Translate --disable-extensions --mute-audio --no-default-browser-check --no-first-run --disable-search-engine-choice-screen --deny-permission-prompts --disable-external-intent-requests --disable-notifications --enable-automation -blink-settings=imagesEnabled=false")
+options.add_argument("--headless='new' --incognito --disable-features=Translate --disable-extensions --mute-audio --no-default-browser-check --no-first-run --disable-search-engine-choice-screen --deny-permission-prompts --disable-external-intent-requests --disable-notifications --enable-automation -blink-settings=imagesEnabled=false")
 
 # Start session
 driver = webdriver.Chrome(options=options)
@@ -101,7 +101,7 @@ while True:
 
 
     # Wait 2 seconds
-    driver.implicitly_wait(0.5)
+    driver.implicitly_wait(0.25)
 
     # Get title and description
     try:
@@ -187,7 +187,7 @@ while True:
             links.pop(index)
             continue
 
-        # Remove useless stuff (#, ?, &) from non-empty links
+        # Remove useless stuff (#, ?, &, :) from non-empty links
         link, sep, tail = link.partition('#')
         link, sep, tail = link.partition('?')
         link, sep, tail = link.partition('&')
@@ -212,9 +212,10 @@ while True:
         # For example, a link may point to non-existing website that returns 404 error code.
         # This is obviously bad. Skip it.
         try:
-            status_code = requests.head(link, timeout=5, allow_redirects=True)
-            if status_code in good_status_codes:
-                print(FAIL+"Returned wrong status code! ("+status_code+")"+ENDC)
+            status_code = int(requests.head(link, timeout=10, allow_redirects=True).status_code)
+            print(OKBLUE+"("+str(status_code)+") "+ENDC, end="")
+            if status_code not in good_status_codes:
+                print(FAIL+"Returned wrong status code! ("+str(status_code)+")"+ENDC)
                 links.pop(index)
                 continue
         except Exception as err:
