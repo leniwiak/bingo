@@ -187,11 +187,16 @@ while True:
         goback()
 
 
+    # Remove duplicated values in list by converting it to a set and then going back to the list
+    links = list(set(links))
+
     # Modify 'links' to only contain values of 'href' attributes
     index = 0
     while index < len(links):
         try:
-            href = links[index].get_attribute("href").lower()
+            # Always convert the text to contains lowercase text
+            # Remove trailing slash
+            href = links[index].get_attribute("href").lower().strip("/")
             links[index] = href
             index+=1
         except:
@@ -231,7 +236,7 @@ while True:
             continue
 
         if keep_domain and init_website not in link:
-            print(WARNING+"Rejected by 'keep_domain' policy!")
+            print(WARNING+"Rejected by 'keep_domain' policy!"+ENDC)
             links.pop(index)
             continue
 
