@@ -51,7 +51,7 @@ def save(title, desc, link):
     print("---")
     now = datetime.datetime.utcnow()
     date = int(str(now.year)+str(now.month)+str(now.day))
-    cur.execute("INSERT INTO searches (title, desc, link, date) VALUES(?, ?, ?, ?)", (title, desc, link, date))
+    cur.execute("INSERT INTO 'searches' (title, desc, link, date) VALUES(?, ?, ?, ?)", (title, desc, link, date))
     con.commit()
 
 def exists(link):
@@ -60,6 +60,8 @@ def exists(link):
 
 # Create a database for searches if it doesn't exist yet
 cur.execute("CREATE TABLE IF NOT EXISTS 'searches' ('id' integer primary key autoincrement unique not null, 'title' text not null, 'desc' text, 'link' text unique not null, 'date' integer not null)")
+# Create a database for likes and popularity contest if it doesn't exist yet
+cur.execute("CREATE TABLE IF NOT EXISTS 'likes' ('id' integer primary key autoincrement unique not null, 'like' integer not null default 0, 'dislike' integer not null default 0, 'id_search' integer unique not null)")
 
 try:
     sys.argv[1]
@@ -83,7 +85,7 @@ while True:
             print(WARNING+"Timeout occured!"+ENDC)
             continue
         except Exception as err:
-            print(FAIL+"Driver error: ("+type(err).__name__+")"+ENDC)
+            print(FAIL+"Driver error occured: ("+type(err).__name__+")"+ENDC)
             # Go back in history
             old_url = driver.current_url
             driver.back()
@@ -168,7 +170,7 @@ while True:
     index = 0
     while index < len(links):
         try:
-            href = links[index].get_attribute("href")
+            href = links[index].get_attribute("href").lower()
             links[index] = href
             index+=1
         except:
