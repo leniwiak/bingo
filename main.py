@@ -213,7 +213,7 @@ while True:
         # For example, a link may point to non-existing website that returns 404 error code.
         # This is obviously bad. Skip it.
         try:
-            status_code = requests.head(link, timeout=5)
+            status_code = requests.head(link, timeout=5, allow_redirects=True)
             if status_code in good_status_codes:
                 print(FAIL+"Returned wrong status code! ("+status_code+")"+ENDC)
                 links.pop(index)
