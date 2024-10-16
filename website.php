@@ -24,14 +24,14 @@
 	</header>
 
 	<script>
-		// This function takes two arguments: search_id (Search result ID to manage) and action (like or dislike).
+		// This function takes two arguments: search_id (Search result ID to manage), action (like or dislike) and which_one (which like counter to adjust on the page)
 		// Then, it connects to add_opinion.php and gives opinion to a proper search result
-		function add_opinion(search_id, action) {
-			console.log(action);
+		function add_opinion(search_id, action, which_one) {
+			console.log(action, which_one);
 			const xhttp = new XMLHttpRequest();
 			xhttp.onload = function() {
-				const pstro = parseInt(document.getElementById(action).text);
-				document.getElementById(action).innerHTML = pstro+1;
+				const pstro = parseInt(document.querySelectorAll('#'+action)[which_one].text);
+				document.querySelectorAll('#'+action)[which_one].innerHTML = pstro+1;
 			}
 			xhttp.open("GET", "add_opinion.php?action="+action+"&id="+search_id, true);
 			xhttp.send();
@@ -56,13 +56,16 @@
 				die();
 			};
 			$db = new SQLite3("./searchindex.db");
-			$result = $db -> query("SELECT DISTINCT id, title, desc, link, like, dislike FROM searches WHERE ".
-					"title LIKE '%".$search."%' OR desc LIKE '%".$search."%' OR link LIKE '%".$search."%'");
+			$result = $db -> query("SELECT id, title, desc, link, like, dislike FROM searches WHERE ".
+					"title LIKE '%".$search."%' OR desc LIKE '%".$search."%' OR link LIKE '%".$search."%' ".
+					"ORDER BY like DESC"
+			);
 
 			echo "<table>";
+			$counter_index=0;
 			while ($row = $result -> fetchArray()) {
 				echo "<tr>";
-					echo "<td id=\"web_result\">";
+					echo "<td id=\"web_result\" onclick=\"window.location.href = '".$row['link']."'\">";
 					echo "<a href=\"".$row['link']."\">";
 						if($row['title']!="") {
 							echo "<h2>".$row['title']."</h2>";
@@ -79,18 +82,21 @@
 					echo "</a>";
 					echo "<br>";
 
-					echo "<div id=\"reaction\" onclick=\"add_opinion(".$row['id'].", 'like');\">";
-						echo "<svg align=\"left\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 -960 960 960\" width=\"1.5%\"><path d=\"M720-120H280v-520l280-280 50 50q7 7 11.5 19t4.5 23v14l-44 174h258q32 0 56 24t24 56v80q0 7-2 15t-4 15L794-168q-9 20-30 34t-44 14Zm-360-80h360l120-280v-80H480l54-220-174 174v406Zm0-406v406-406Zm-80-34v80H160v360h120v80H80v-520h200Z\" id=\"reaction_svg\"/></svg>";
+					echo "<div id=\"reaction\" onclick=\"add_opinion(".$row['id'].", 'like', ".$counter_index.");\">";
+						echo "<svg align=\"left\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 -960 960 960\" width=\"2%\"><path d=\"M720-120H280v-520l280-280 50 50q7 7 11.5 19t4.5 23v14l-44 174h258q32 0 56 24t24 56v80q0 7-2 15t-4 15L794-168q-9 20-30 34t-44 14Zm-360-80h360l120-280v-80H480l54-220-174 174v406Zm0-406v406-406Zm-80-34v80H160v360h120v80H80v-520h200Z\" id=\"reaction_svg\"/></svg>";
 						echo "<a id=\"like\" class=\"reaction_count\">".$row['like']."</a>";
 					echo "</div>";
 
-					echo "<div id=\"reaction\" onclick=\"add_opinion(".$row['id'].", 'dislike');\">";
-						echo "<svg align=\"left\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 -960 960 960\" width=\"1.5%\"><path d=\"M240-840h440v520L400-40l-50-50q-7-7-11.5-19t-4.5-23v-14l44-174H120q-32 0-56-24t-24-56v-80q0-7 2-15t4-15l120-282q9-20 30-34t44-14Zm360 80H240L120-480v80h360l-54 220 174-174v-406Zm0 406v-406 406Zm80 34v-80h120v-360H680v-80h200v520H680Z\" id=\"reaction_svg\"/></svg>";
+					echo "<div id=\"reaction\" onclick=\"add_opinion(".$row['id'].", 'dislike', ".$counter_index.");\">";
+						echo "<svg align=\"left\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 -960 960 960\" width=\"2%\"><path d=\"M240-840h440v520L400-40l-50-50q-7-7-11.5-19t-4.5-23v-14l44-174H120q-32 0-56-24t-24-56v-80q0-7 2-15t4-15l120-282q9-20 30-34t44-14Zm360 80H240L120-480v80h360l-54 220 174-174v-406Zm0 406v-406 406Zm80 34v-80h120v-360H680v-80h200v520H680Z\" id=\"reaction_svg\"/></svg>";
 						echo "<a id=\"dislike\" class=\"reaction_count\">".$row['dislike']."</a>";
 					echo "</div>";
 
+					echo "<div id=\"reaction\" onclick=\"add_opinion(".$row['id'].", 'dislike', ".$counter_index.");\">";
+					echo "</div>";
 					echo "</td>";
 				echo "</tr>";
+			$counter_index+=1;
 			}
 			echo "</table>";
 		};
