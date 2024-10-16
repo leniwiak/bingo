@@ -96,3 +96,21 @@ a:visited {
 	color: #0F0;
 }
 
+#reaction {
+	display: inline;
+	padding: 1.5% 1% 1% 1%;
+	cursor: default;
+}
+#reaction:hover {
+	background-color: #555;
+}
+#reaction_svg {
+	fill: #ddd;
+	display: inline-block;
+}
+.reaction_count {
+	font-size: 150%;
+	display: inline-block;
+	margin-right: 1%;
+	margin-left: 1%;
+}

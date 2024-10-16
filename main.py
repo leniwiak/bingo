@@ -4,6 +4,7 @@ import sqlite3
 import datetime
 from selenium import webdriver
 from selenium.webdriver.common.by import By
+from selenium.common.exceptions import TimeoutException
 import urllib.robotparser
 from urllib.parse import urlparse
 
@@ -59,9 +60,7 @@ def exists(link):
     return len(cur.fetchall()) != 0
 
 # Create a database for searches if it doesn't exist yet
-cur.execute("CREATE TABLE IF NOT EXISTS 'searches' ('id' integer primary key autoincrement unique not null, 'title' text not null, 'desc' text, 'link' text unique not null, 'date' integer not null)")
-# Create a database for likes and popularity contest if it doesn't exist yet
-cur.execute("CREATE TABLE IF NOT EXISTS 'likes' ('id' integer primary key autoincrement unique not null, 'like' integer not null default 0, 'dislike' integer not null default 0, 'id_search' integer unique not null)")
+cur.execute("CREATE TABLE IF NOT EXISTS 'searches' ('id' integer primary key autoincrement unique not null, 'title' text not null, 'desc' text, 'link' text unique not null, 'date' integer not null, 'like' integer not null default 0, 'dislike' integer not null default 0)")
 
 try:
     sys.argv[1]
@@ -81,7 +80,7 @@ while True:
     if not going_back:
         try:
             driver.get(url_to_index)
-        except TimeoutException as err:
+        except TimeoutException:
             print(WARNING+"Timeout occured!"+ENDC)
             continue
         except Exception as err:
