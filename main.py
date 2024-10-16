@@ -65,6 +65,7 @@ first_iter = True
 
 def goback():
     print("Going back...")
+    global first_iter
     old_url = driver.current_url
     driver.back()
     new_url = driver.current_url
@@ -178,6 +179,7 @@ while True:
 
     # Reset first_iter to False
     if first_iter:
+        print("Resetting first_iter to false...")
         first_iter = False
 
     # Get list of links
