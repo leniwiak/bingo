@@ -47,7 +47,8 @@
 						if($row['title']!="") {
 							echo "<h2>".$row['title']."</h2>";
 						} else {
-							echo "<h2>No title provided.</h2>";
+							$temporary_title = substr(stristr($row['link'], "://"), 3);
+							echo "<h2>".$temporary_title."</h2>";
 						}
 						echo "<a href=\"".$row['link']."\" id=\"url\">".$row['link']."</a>";
 						if($row['desc']!="") {
