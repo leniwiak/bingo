@@ -16,7 +16,7 @@
 	</header>
 
 	<script>
-		var items = Array("What's on your mind?", "Anything interesting?", "Type something here", "A query of the day is...", "Describe your intentions", "Search the internet", "What's going on?", "What do you like?", "Tell me what to do", "What you want to discover?", "Anywhere to go?", "Wanna surf?", "Browse the web");
+		var items = Array("What's on your mind?", "Anything interesting?", "Type something here", "A query of the day is...", "Describe your intentions", "Search the internet", "What's going on?", "What do you like?", "Tell me what to do", "What you want to discover?", "Anywhere to go?", "Let's surf!", "Let's start!", "Browse the web");
 		var item = items[Math.floor(Math.random()*items.length)];
 		document.getElementById("inputbox").placeholder = item;
 	</script>
