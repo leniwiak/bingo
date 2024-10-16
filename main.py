@@ -61,6 +61,8 @@ def save(title, desc, link):
     cur.execute("INSERT INTO 'searches' (title, desc, link, date) VALUES(?, ?, ?, ?)", (title, desc, link, date))
     con.commit()
 
+first_iter = True
+
 def goback():
     print("Going back...")
     old_url = driver.current_url
@@ -71,6 +73,7 @@ def goback():
     if old_url == new_url or new_url == "data:,":
         print(FAIL+"No page to go back to!"+ENDC)
         exit(1)
+    first_iter = True
     url_to_index=new_url
 
 def exists(link):
@@ -119,7 +122,6 @@ url_to_index = sys.argv[1]
 init_website = re.sub(r'^.*?://', '', url_to_index)
 if keep_domain:
     print("Keeping domain:",init_website)
-first_iter = True
 
 # Go to specified URL
 while True:
@@ -170,7 +172,7 @@ while True:
     # Save current website to the database
     # Skip saving (and do not print any error) if the script just started and website is already in db.
     if first_iter and exists(link=url_to_index):
-        print("This site has been already added to the database but the script just started. It's probably okay to just skip saving.")
+        print("This site has been already added to the database but the script just started or went back from some weird page. It's probably okay to just skip saving and not bother.")
     else:
         save(title=title, desc=desc, link=url_to_index)
 
@@ -253,7 +255,7 @@ while True:
                 links.pop(index)
                 continue
             if status_code not in good_status_codes:
-                print(FAIL+"Wrong status code! ("+str(status_code)+")"+ENDC)
+                print(FAIL+"Wrong status code!"+ENDC)
                 links.pop(index)
                 continue
         except Exception as err:
