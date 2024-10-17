@@ -58,14 +58,18 @@ def save(title, desc, link):
     print("---")
     now = datetime.datetime.utcnow()
     date = int(str(now.year)+str(now.month)+str(now.day))
-    cur.execute("INSERT INTO 'searches' (title, desc, link, date) VALUES(?, ?, ?, ?)", (title, desc, link, date))
-    con.commit()
+    try:
+        cur.execute("INSERT INTO 'searches' (title, desc, link, date) VALUES(?, ?, ?, ?)", (title, desc, link, date))
+        con.commit()
+    except Exception as err:
+        print(FAIL+"Database task failed: "+type(err).__name__+ENDC)
 
 first_iter = True
 
 def goback():
     print("Going back...")
     global first_iter
+    global url_to_index
     old_url = driver.current_url
     driver.back()
     new_url = driver.current_url
@@ -90,7 +94,7 @@ except:
     print("Please, add an argument specifying the full URL to start crawling from like 'https://example.com'.")
     exit(1)
 
-# That doesn't look good. Clean it up a bit later.
+# This portion of code doesn't look good. Clean it up a bit later.
 try:
     additional_arg = sys.argv[2]
     match additional_arg:
@@ -139,7 +143,7 @@ while True:
         # Go back in history
         goback()
 
-    driver.implicitly_wait(0.25)
+    #driver.implicitly_wait(0.25)
 
     # Get title and description
     try:
@@ -190,7 +194,6 @@ while True:
         # Go back in history
         goback()
 
-
     # Remove duplicated values in list by converting it to a set and then going back to the list
     links = list(set(links))
 
@@ -209,6 +212,9 @@ while True:
 
     index = 0
     while index < len(links):
+        if not links:
+            break
+
         link = links[index]
 
         if link == None:
@@ -265,22 +271,21 @@ while True:
                 links.pop(index)
                 continue
 
-
         # Nothing wrong until this point? The link seems to be good!
         print(OKGREEN+"OK"+ENDC)
         index+=1
 
-    if len(links) == 0:
+    if not links:
         print(WARNING+"There are links on this page, but none of them are usefull."+ENDC)
         # Go back in history
         goback()
     else:
-        for link in links:
-            if not no_follow:
+        if not no_follow:
+            for link in links:
                 url_to_index=link
-            else:
-                print("Not following any link. That's it")
-                exit(0)
+        else:
+            print("Not following any link. That's it")
+            exit(0)
 
 # End browser session
 driver.quit()
