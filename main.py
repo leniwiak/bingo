@@ -1,3 +1,4 @@
+import time
 import sys
 import re
 import requests
@@ -58,11 +59,15 @@ def save(title, desc, link):
     print("---")
     now = datetime.datetime.utcnow()
     date = int(str(now.year)+str(now.month)+str(now.day))
+
     try:
         cur.execute("INSERT INTO 'searches' (title, desc, link, date) VALUES(?, ?, ?, ?)", (title, desc, link, date))
         con.commit()
+        return
     except Exception as err:
-        print(FAIL+"Database task failed: "+type(err).__name__+ENDC)
+        print(FAIL+"Database task failed. Cannot save because of an error: "+type(err).__name__+ENDC)
+        time.sleep(1)
+        save(title, desc, link)
 
 first_iter = True
 
@@ -82,8 +87,13 @@ def goback():
     url_to_index=new_url
 
 def exists(link):
-    result = cur.execute("SELECT link FROM searches WHERE link=?", (link,))
-    return len(cur.fetchall()) != 0
+    try:
+        result = cur.execute("SELECT link FROM searches WHERE link=?", (link,))
+        return len(cur.fetchall()) != 0
+    except Exception as err:
+        print(FAIL+"Database task failed. Cannot check existance because of an error: "+type(err).__name__+ENDC)
+        time.sleep(1)
+        exists(link)
 
 # Create a database for searches if it doesn't exist yet
 cur.execute("CREATE TABLE IF NOT EXISTS 'searches' ('id' integer primary key autoincrement unique not null, 'title' text not null, 'desc' text, 'link' text unique not null, 'date' integer not null, 'like' integer not null default 0, 'dislike' integer not null default 0)")
@@ -123,7 +133,7 @@ try:
 except:
     pass
 
-url_to_index = sys.argv[1]
+url_to_index = sys.argv[1].lower().strip("/")
 init_website = re.sub(r'^.*?://', '', url_to_index)
 if keep_domain:
     print("Keeping domain:",init_website)

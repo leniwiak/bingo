@@ -96,15 +96,15 @@ a:visited {
 	color: #0F0;
 }
 
-#reaction {
+.reaction {
 	display: inline;
 	padding: 1.5% 1% 1% 1%;
 	cursor: default;
 }
-#reaction:hover {
+.reaction:hover {
 	background-color: #555;
 }
-#reaction_svg {
+.reaction_svg {
 	fill: #ddd;
 	display: inline-block;
 }
