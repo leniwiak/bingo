@@ -76,7 +76,11 @@ def goback():
     global first_iter
     global url_to_index
     old_url = driver.current_url
-    driver.back()
+    try:
+        driver.back()
+    except Exception as err:
+        print(FAIL+"Driver can't go back: "+type(err).__name__+ENDC)
+        exit(1)
     new_url = driver.current_url
     print("Old URL: "+old_url)
     print("New URL: "+new_url)
@@ -156,13 +160,14 @@ while True:
     #driver.implicitly_wait(0.25)
 
     # Get title and description
+    title = "Untitled"
     try:
         title = driver.title
         # Strip trailing newlines
         title = title.strip()
     except Exception as err:
         print(WARNING+"Failed to get contents of <title>: "+type(err).__name__+ENDC)
-        title = "Untitled"
+
     if title == None:
         title = "Untitled"
 
