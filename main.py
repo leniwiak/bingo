@@ -254,6 +254,7 @@ while True:
         if "javascript:" in link:
             print(FAIL+"Contains 'javascript:' text!"+ENDC)
             links.pop(index)
+            continue
 
         if exists(link=link):
             print(WARNING+"Already indexed!"+ENDC)
