@@ -105,20 +105,28 @@ def goback():
     print("Going back...")
     global first_iter
     global url_to_index
-    old_url = driver.current_url
-    try:
-        driver.back()
-    except Exception as err:
-        print(FAIL+"Driver can't go back: "+type(err).__name__+ENDC)
+    global history
+
+    # Remove website that we are already in
+    history.pop()
+
+    history_length = len(history)
+    print("There are "+OKBLUE+str(history_length)+ENDC+" elements in history.")
+
+    if history_length <= 1:
+        print(FAIL+"This is the end of session history. No page to go back to!"+ENDC)
         exit(1)
-    new_url = driver.current_url
-    print("Old URL: "+old_url)
-    print("New URL: "+new_url)
-    if old_url == new_url or new_url == "data:,":
-        print(FAIL+"No page to go back to!"+ENDC)
-        exit(1)
+
+    going_from = history[-1]
+    history.pop()
+    going_to = history[-1]
+
+    print("Old URL: "+going_from)
+    print("New URL: "+going_to)
+
     first_iter = True
-    url_to_index=new_url
+    url_to_index=going_to
+
     print("---")
 
 # Create a database for searches if it doesn't exist yet
@@ -163,6 +171,10 @@ except:
 
 url_to_index = sys.argv[1].lower().strip("/")
 init_website = re.sub(r'^.*?://', '', url_to_index)
+
+# History of visited sites in session
+history = []
+
 if keep_domain:
     print("Keeping domain:",init_website)
 
@@ -170,8 +182,7 @@ if keep_domain:
 while True:
     print(OKBLUE+url_to_index+ENDC)
 
-    if url_to_index == "data:,":
-        break
+    history.append(url_to_index)
 
     try:
         driver.get(url_to_index)
@@ -265,7 +276,7 @@ while True:
         if not links:
             break
 
-        link = links[index]
+        link = links[index].strip('/')
 
         if link == None:
             print(FAIL+"No link in <a> tag!"+ENDC)
@@ -311,7 +322,7 @@ while True:
         if not links:
             break
 
-        link = links[index]
+        link = links[index].strip('/')
 
         try:
             response = requests.head(link, timeout=10, allow_redirects=True)
