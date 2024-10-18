@@ -109,7 +109,6 @@ def goback():
     global going_back
 
     history_length = len(history)
-    print(history)
     print("There are "+OKBLUE+str(history_length)+ENDC+" elements in history.")
 
     if history_length <= 1:
