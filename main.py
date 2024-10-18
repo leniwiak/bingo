@@ -106,11 +106,10 @@ def goback():
     global first_iter
     global url_to_index
     global history
-
-    # Remove website that we are already in
-    history.pop()
+    global going_back
 
     history_length = len(history)
+    print(history)
     print("There are "+OKBLUE+str(history_length)+ENDC+" elements in history.")
 
     if history_length <= 1:
@@ -125,6 +124,7 @@ def goback():
     print("New URL: "+going_to)
 
     first_iter = True
+    going_back = True
     url_to_index=going_to
 
     print("---")
@@ -173,6 +173,7 @@ url_to_index = sys.argv[1].lower().strip("/")
 init_website = re.sub(r'^.*?://', '', url_to_index)
 
 # History of visited sites in session
+going_back = False
 history = []
 
 if keep_domain:
@@ -182,7 +183,8 @@ if keep_domain:
 while True:
     print(OKBLUE+url_to_index+ENDC)
 
-    history.append(url_to_index)
+    if not going_back:
+        history.append(url_to_index)
 
     try:
         driver.get(url_to_index)
@@ -240,15 +242,15 @@ while True:
 
     # Save current website to the database
     # Skip saving (and do not print any error) if the script just started and website is already in db.
-    if first_iter and exists(link=url_to_index):
+    if first_iter and exists(link=url_to_index.strip("/")):
         print("This site has been already added to the database but the script just started or went back from some weird page. It's probably okay to just skip saving and not bother.")
     else:
         save(title=title, desc=desc, language=language, link=url_to_index)
 
-    # Reset first_iter to False
     if first_iter:
-        print("Resetting first_iter to false...")
         first_iter = False
+    if going_back:
+        going_back = False
 
     # Get list of links
     try:
@@ -300,7 +302,7 @@ while True:
             links.pop(index)
             continue
 
-        if exists(link=link):
+        if exists(link=link.strip("/")):
             print(link, WARNING+"Already indexed!"+ENDC)
             links.pop(index)
             continue
@@ -356,7 +358,7 @@ while True:
     else:
         if not no_follow:
             for link in links:
-                url_to_index=link
+                url_to_index=link.strip("/")
         else:
             print("Not following any link. That's it")
             exit(0)
