@@ -51,27 +51,57 @@ driver = webdriver.Chrome(options=options)
 def debug_wait():
     input("Press any key to continue... ")
 
-def save(title, desc, link):
-    print("---")
-    print("title: "+BOLD+title+ENDC)
-    print("desc:  "+BOLD+desc+ENDC)
-    print("link:  "+BOLD+url_to_index+ENDC)
-    print("---")
+def exists(link):
+    try:
+        cur.execute("SELECT link FROM searches WHERE link=?", (link,))
+        searches_len = len(cur.fetchall())
+        cur.execute("SELECT link FROM useless_searches WHERE link=?", (link,))
+        useless_len = len(cur.fetchall())
+        return (searches_len != 0 or useless_len != 0)
+    except Exception as err:
+        print(FAIL+"Database task failed. Cannot check existance because of an error: "+type(err).__name__+ENDC)
+        time.sleep(1)
+        exists(link)
+
+def save(title, desc, language, link):
+    print(OKGREEN+"---")
+    print("title: "+title)
+    print("desc:  "+desc)
+    print("lang:  "+language)
+    print("link:  "+link)
+    print("---"+ENDC)
     now = datetime.datetime.utcnow()
     date = int(str(now.year)+str(now.month)+str(now.day))
 
     try:
-        cur.execute("INSERT INTO 'searches' (title, desc, link, date) VALUES(?, ?, ?, ?)", (title, desc, link, date))
+        cur.execute("INSERT INTO 'searches' (title, desc, language, link, date) VALUES(?, ?, ?, ?, ?)", (title, desc, language, link, date))
         con.commit()
         return
     except Exception as err:
         print(FAIL+"Database task failed. Cannot save because of an error: "+type(err).__name__+ENDC)
+        print(err)
         time.sleep(1)
-        save(title, desc, link)
+        save(title, desc, language, link)
+
+def save_useless_result(link):
+    print(FAIL+"---")
+    print("link:  "+link)
+    print("---"+ENDC)
+
+    try:
+        cur.execute("INSERT INTO 'useless_searches' (link) VALUES(?)", (link,))
+        con.commit()
+        return
+    except Exception as err:
+        print(FAIL+"Database task failed. Cannot save useless result because of an error: "+type(err).__name__+ENDC)
+        print(err)
+        time.sleep(1)
+        save_useless_result(link)
 
 first_iter = True
 
 def goback():
+    print("---")
     print("Going back...")
     global first_iter
     global url_to_index
@@ -89,18 +119,12 @@ def goback():
         exit(1)
     first_iter = True
     url_to_index=new_url
-
-def exists(link):
-    try:
-        result = cur.execute("SELECT link FROM searches WHERE link=?", (link,))
-        return len(cur.fetchall()) != 0
-    except Exception as err:
-        print(FAIL+"Database task failed. Cannot check existance because of an error: "+type(err).__name__+ENDC)
-        time.sleep(1)
-        exists(link)
+    print("---")
 
 # Create a database for searches if it doesn't exist yet
-cur.execute("CREATE TABLE IF NOT EXISTS 'searches' ('id' integer primary key autoincrement unique not null, 'title' text not null, 'desc' text, 'link' text unique not null, 'date' integer not null, 'like' integer not null default 0, 'dislike' integer not null default 0)")
+cur.execute("CREATE TABLE IF NOT EXISTS 'searches' ('id' integer primary key autoincrement unique not null, 'title' text not null, 'desc' text, 'link' text unique not null, 'language' text, 'date' integer not null, 'like' integer not null default 0, 'dislike' integer not null default 0)")
+# Create a database for link that aren't usable in our search engine
+cur.execute("CREATE TABLE IF NOT EXISTS 'useless_searches' ('id' integer primary key autoincrement unique not null, 'link' text unique not null)")
 
 try:
     sys.argv[1]
@@ -144,13 +168,16 @@ if keep_domain:
 
 # Go to specified URL
 while True:
+    print(OKBLUE+url_to_index+ENDC)
+
     if url_to_index == "data:,":
         break
-    print(OKBLUE+url_to_index+ENDC)
+
     try:
         driver.get(url_to_index)
     except TimeoutException:
-        print(WARNING+"Timeout occured!"+ENDC)
+        print(WARNING+"Timeout occured! Waiting 5 seconds..."+ENDC)
+        time.sleep(5)
         continue
     except Exception as err:
         print(FAIL+"Driver error occured: ("+type(err).__name__+")"+ENDC)
@@ -160,7 +187,7 @@ while True:
     #driver.implicitly_wait(0.25)
 
     # Get title and description
-    title = "Untitled"
+    title = ""
     try:
         title = driver.title
         # Strip trailing newlines
@@ -169,32 +196,43 @@ while True:
         print(WARNING+"Failed to get contents of <title>: "+type(err).__name__+ENDC)
 
     if title == None:
-        title = "Untitled"
+        title = ""
 
+
+    language = ""
     try:
-        paragraph_tag = driver.find_element(By.TAG_NAME, "p").text
+        language = driver.find_element(By.TAG_NAME, "html").get_attribute("lang").strip()
     except Exception as err:
-        print(WARNING+"Failed to get contents of <p>: "+type(err).__name__+ENDC)
-        paragraph_tag = ""
-    try:
-        header_tag = driver.find_element(By.TAG_NAME, "h1").text
-    except Exception as err:
-        print(WARNING+"Failed to get contents of <h1>: "+type(err).__name__+ENDC)
-        header_tag = ""
+        print(WARNING+"Failed to get contents of <html lang=\"\">: "+type(err).__name__+ENDC)
 
     desc = ""
-    if paragraph_tag != None or paragraph_tag != "":
-        desc = paragraph_tag
-    if header_tag != None or header_tag != "":
-        desc = header_tag
-    desc = desc.strip()
+    if desc == "":
+        meta_description = ""
+        try:
+            meta_description=driver.find_element(By.XPATH,"//meta[@name='description']").get_attribute("content").strip()
+        except Exception as err:
+            print(WARNING+"Failed to get contents of <meta name=\"description\" content=\"\">: "+type(err).__name__+ENDC)
+
+    if desc == "":
+        paragraph_tag = ""
+        try:
+            paragraph_tag = driver.find_element(By.TAG_NAME, "p").text.strip()
+        except Exception as err:
+            print(WARNING+"Failed to get contents of <p>: "+type(err).__name__+ENDC)
+
+    if desc == "":
+        header_tag = ""
+        try:
+            header_tag = driver.find_element(By.TAG_NAME, "h1").text.strip()
+        except Exception as err:
+            print(WARNING+"Failed to get contents of <h1>: "+type(err).__name__+ENDC)
 
     # Save current website to the database
     # Skip saving (and do not print any error) if the script just started and website is already in db.
     if first_iter and exists(link=url_to_index):
         print("This site has been already added to the database but the script just started or went back from some weird page. It's probably okay to just skip saving and not bother.")
     else:
-        save(title=title, desc=desc, link=url_to_index)
+        save(title=title, desc=desc, language=language, link=url_to_index)
 
     # Reset first_iter to False
     if first_iter:
@@ -209,15 +247,11 @@ while True:
         # Go back in history
         goback()
 
-    # Remove duplicated values in list by converting it to a set and then going back to the list
-    links = list(set(links))
-
     # Modify 'links' to only contain values of 'href' attributes
     index = 0
     while index < len(links):
         try:
-            # Always convert the text to contains lowercase text
-            # Remove trailing slash
+            # Always make text lowercase and remove all useless slashes
             href = links[index].get_attribute("href").lower().strip("/")
             links[index] = href
             index+=1
@@ -225,6 +259,7 @@ while True:
             print("Failed to get 'href' attribute")
             links.pop(index)
 
+    # Throw away hyperlinks that are useless at the first glance
     index = 0
     while index < len(links):
         if not links:
@@ -244,52 +279,64 @@ while True:
         link, sep, tail = link.partition('%')
         links[index] = link
 
-        print(link,'\b: ', end='')
-
         if link == "":
-            print(FAIL+"Link is empty!"+ENDC)
+            print(link, FAIL+"Link is empty!"+ENDC)
             links.pop(index)
             continue
 
         if "javascript:" in link:
-            print(FAIL+"Contains 'javascript:' text!"+ENDC)
+            print(link, FAIL+"Contains 'javascript:' text!"+ENDC)
             links.pop(index)
             continue
 
         if exists(link=link):
-            print(WARNING+"Already indexed!"+ENDC)
+            print(link, WARNING+"Already indexed!"+ENDC)
             links.pop(index)
             continue
 
-        if keep_domain and init_website not in link:
-            print(WARNING+"Rejected by 'keep_domain' policy!"+ENDC)
+        if keep_domain and init_website not in urlparse(link).netloc:
+            print(link, WARNING+"Rejected by 'keep_domain' policy!"+ENDC)
             links.pop(index)
             continue
+        index+=1
 
-        # Check if the website behind the link is accessible.
-        # For example, a link may point to non-existing website that returns 404 error code.
-        # This is obviously bad. Skip it.
+    # Remove duplicated values in list by converting it to a set and then going back to the list
+    links = list(set(links))
+
+    # Check if the website behind the link is accessible.
+    # For example, a link may point to non-existing site, a file or something even worse
+    # This is obviously bad. Save those useless links to the database using SAVE_USELESS_RESULT()
+    index = 0
+    while index < len(links):
+        if not links:
+            break
+
+        link = links[index]
+
         try:
             response = requests.head(link, timeout=10, allow_redirects=True)
             status_code = int(response.status_code)
             content_type = response.headers['content-type']
-            print(OKBLUE+"("+str(status_code)+") "+ENDC, end="")
-            if "text/" not in content_type:
-                print(FAIL+"Wrong content-type! ("+str(content_type)+")"+ENDC)
-                links.pop(index)
-                continue
-            if status_code not in good_status_codes:
-                print(FAIL+"Wrong status code!"+ENDC)
-                links.pop(index)
-                continue
         except Exception as err:
-                print(FAIL+"Failed to connect ("+type(err).__name__+")"+ENDC)
+                print(link, FAIL+"Failed to connect ("+type(err).__name__+")"+ENDC)
+                save_useless_result(link=link)
                 links.pop(index)
                 continue
 
-        # Nothing wrong until this point? The link seems to be good!
-        print(OKGREEN+"OK"+ENDC)
-        index+=1
+        if "text/" not in content_type:
+            print(link, FAIL+"Wrong content-type! ("+str(content_type)+")"+ENDC)
+            save_useless_result(link=link)
+            links.pop(index)
+            continue
+        elif status_code not in good_status_codes:
+            print(link, FAIL+"Wrong status code! ("+str(status_code)+")"+ENDC)
+            save_useless_result(link=link)
+            links.pop(index)
+            continue
+        else:
+            print(link, OKGREEN+"OK"+ENDC)
+            index+=1
+            continue
 
     if not links:
         print(WARNING+"There are links on this page, but none of them are usefull."+ENDC)
