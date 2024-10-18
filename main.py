@@ -191,6 +191,7 @@ while True:
     except TimeoutException:
         print(WARNING+"Timeout occured! Waiting 5 seconds..."+ENDC)
         time.sleep(5)
+        going_back = True
         continue
     except Exception as err:
         print(FAIL+"Driver error occured: ("+type(err).__name__+")"+ENDC)
