@@ -331,10 +331,16 @@ while True:
             status_code = int(response.status_code)
             content_type = response.headers['content-type']
         except Exception as err:
-                print(link, FAIL+"Failed to connect ("+type(err).__name__+")"+ENDC)
-                save_useless_result(link=link)
-                links.pop(index)
-                continue
+                aaa=type(err).__name__
+                if aaa == "ReadTimeout":
+                    print(link, WARNING+"Got timeout error. Waiting 5 seconds..."+ENDC)
+                    time.sleep(5)
+                    continue
+                else:
+                    print(link, FAIL+"Failed to connect ("+aaa+")"+ENDC)
+                    save_useless_result(link=link)
+                    links.pop(index)
+                    continue
 
         if "text/" not in content_type:
             print(link, FAIL+"Wrong content-type! ("+str(content_type)+")"+ENDC)
