@@ -12,8 +12,8 @@
 		<form method="get">
 			<?php
 			if (isset($_GET['s'])) {
-				#$search = htmlentities($_GET['s']);
-				$search = $_GET['s'];
+				$search = htmlentities($_GET['s']);
+				#$search = $_GET['s'];
 			} else {
 				$search = "";
 			};
@@ -56,15 +56,17 @@
 				echo "<p>You request exceeds allowed text length! Please, make your query a bit shorter.</p>";
 				die();
 			};
-			$db = new SQLite3("./searchindex.db");
-			$result = $db -> query("SELECT id, title, desc, link, like, dislike FROM searches WHERE ".
-					"title LIKE '%".$search."%' OR desc LIKE '%".$search."%' OR link LIKE '%".$search."%' ".
+			$db = new PDO("sqlite:./searchindex.db");
+			$stmt = $db -> prepare("SELECT id, title, desc, link, like, dislike FROM searches WHERE ".
+					"title LIKE :search OR desc LIKE :search OR link LIKE :search ".
 					"ORDER BY like DESC"
 			);
+			#$stmt -> bindParam(':search', $search);
+			$stmt -> execute(['search' => "%$search%"]);
 
 			echo "<table>";
 			$counter_index=0;
-			while ($row = $result -> fetchArray()) {
+			while ($row = $stmt -> fetch(PDO::FETCH_ASSOC)) {
 				echo "<tr>";
 					echo "<td id=\"web_result\"\">";
 					echo "<a href=\"".$row['link']."\">";
