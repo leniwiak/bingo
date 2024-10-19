@@ -40,7 +40,7 @@ UNDERLINE = '\033[4m'
 options = webdriver.ChromeOptions()
 options.page_load_strategy = 'normal' # Wait until website fully loads
 options.accept_insecure_certs = False
-options.timeouts = { 'script': 10000, 'pageLoad' : 10000 } # Set a timeout to 5 seconds
+#options.timeouts = { 'script': 10000, 'pageLoad' : 10000 } # Set a timeout to 5 seconds
 options.unhandled_prompt_behavior = 'accept'
 options.add_argument("--headless='new' --incognito --disable-features=Translate --disable-extensions --mute-audio --no-default-browser-check --no-first-run --disable-search-engine-choice-screen --deny-permission-prompts --disable-external-intent-requests --disable-notifications --enable-automation -blink-settings=imagesEnabled=false")
 
@@ -175,6 +175,8 @@ init_website = re.sub(r'^.*?://', '', url_to_index)
 going_back = False
 history = []
 
+timeout_counter = 0
+
 if keep_domain:
     print("Keeping domain:",init_website)
 
@@ -188,12 +190,15 @@ while True:
     try:
         driver.get(url_to_index)
     except TimeoutException:
-        print(WARNING+"Timeout occured! Waiting 5 seconds..."+ENDC)
-        time.sleep(5)
-        going_back = True
-        continue
+        if timeout_counter < 30:
+            print(WARNING+"Timeout occured! Waiting 5 seconds... ("+str(timeout_counter)+"/30)"+ENDC)
+            timeout_counter+=1
+            time.sleep(5)
+            going_back = True
+            continue
     except Exception as err:
         print(FAIL+"Driver error occured: ("+type(err).__name__+")"+ENDC)
+        timeout_counter = 0
         # Go back in history
         goback()
 
@@ -272,6 +277,9 @@ while True:
             print("Failed to get 'href' attribute")
             links.pop(index)
 
+    # Remove duplicated values in list by converting it to a set and then going back to the list
+    links = list(set(links))
+
     # Throw away hyperlinks that are useless at the first glance
     index = 0
     while index < len(links):
@@ -290,6 +298,7 @@ while True:
         link, sep, tail = link.partition('?')
         link, sep, tail = link.partition('&')
         link, sep, tail = link.partition('%')
+        link = link.strip("/")
         links[index] = link
 
         if link == "":
@@ -327,17 +336,20 @@ while True:
         link = links[index].strip('/')
 
         try:
-            response = requests.head(link, timeout=10, allow_redirects=True)
+            #response = requests.head(link, timeout=10, allow_redirects=True)
+            response = requests.head(link, allow_redirects=True)
             status_code = int(response.status_code)
             content_type = response.headers['content-type']
         except Exception as err:
                 aaa=type(err).__name__
-                if aaa == "ReadTimeout":
-                    print(link, WARNING+"Got timeout error. Waiting 5 seconds..."+ENDC)
+                if aaa == "ReadTimeout" and timeout_counter < 30:
+                    print(link, WARNING+"Got timeout error. Waiting 5 seconds... ("+str(timeout_counter)+")"+ENDC)
+                    timeout_counter+=1
                     time.sleep(5)
                     continue
                 else:
                     print(link, FAIL+"Failed to connect ("+aaa+")"+ENDC)
+                    timeout_counter = 0
                     save_useless_result(link=link)
                     links.pop(index)
                     continue
