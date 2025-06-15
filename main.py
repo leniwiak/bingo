@@ -70,7 +70,7 @@ def save(title, desc, language, link):
     print("lang:  "+language)
     print("link:  "+link)
     print("---"+ENDC)
-    now = datetime.datetime.utcnow()
+    now = datetime.datetime.now(datetime.UTC)
     date = int(str(now.year)+str(now.month)+str(now.day))
 
     try:
@@ -84,9 +84,9 @@ def save(title, desc, language, link):
         save(title, desc, language, link)
 
 def save_useless_result(link):
-    print(FAIL+"---")
-    print("link:  "+link)
-    print("---"+ENDC)
+    # print(FAIL+"---")
+    # print("link:  "+link)
+    # print("---"+ENDC)
 
     try:
         cur.execute("INSERT INTO 'useless_searches' (link) VALUES(?)", (link,))
@@ -127,6 +127,20 @@ def goback():
     url_to_index=going_to
 
     print("---")
+
+def find_entity(where=None, what=None, attr=None):
+    if attr is None:
+        try:
+            driver.find_element(where, what).text.strip()
+        except Exception as err:
+            print(WARNING+"Failed to get contents of <"+what+">: "+type(err).__name__+ENDC)
+            return ""
+    else:
+        try:
+            return driver.find_element(where, what).get_attribute(attr).strip()
+        except Exception as err:
+            print(WARNING+"Failed to get contents of <"+what+" "+attr+"=\"\">: "+type(err).__name__+ENDC)
+            return ""
 
 # Create a database for searches if it doesn't exist yet
 cur.execute("CREATE TABLE IF NOT EXISTS 'searches' ('id' integer primary key autoincrement unique not null, 'title' text not null, 'desc' text, 'link' text unique not null, 'language' text, 'date' integer not null, 'like' integer not null default 0, 'dislike' integer not null default 0)")
@@ -204,7 +218,7 @@ while True:
 
     #driver.implicitly_wait(0.25)
 
-    # Get title and description
+    # Get title of the page
     title = ""
     try:
         title = driver.title
@@ -212,38 +226,26 @@ while True:
         title = title.strip()
     except Exception as err:
         print(WARNING+"Failed to get contents of <title>: "+type(err).__name__+ENDC)
-
+    # If driver.title resulted in title == None, fix it.
     if title == None:
         title = ""
 
+    # Get language from <html lang="">
+    language = find_entity(By.TAG_NAME, "html", "lang")
 
-    language = ""
-    try:
-        language = driver.find_element(By.TAG_NAME, "html").get_attribute("lang").strip()
-    except Exception as err:
-        print(WARNING+"Failed to get contents of <html lang=\"\">: "+type(err).__name__+ENDC)
-
+    # Get possible description from a couple of usefull sources
     desc = ""
     if desc == "":
-        meta_description = ""
-        try:
-            meta_description=driver.find_element(By.XPATH,"//meta[@name='description']").get_attribute("content").strip()
-        except Exception as err:
-            print(WARNING+"Failed to get contents of <meta name=\"description\" content=\"\">: "+type(err).__name__+ENDC)
-
+        meta_description = find_entity(By.XPATH,"//meta[@name='description']", "content")
     if desc == "":
-        paragraph_tag = ""
-        try:
-            paragraph_tag = driver.find_element(By.TAG_NAME, "p").text.strip()
-        except Exception as err:
-            print(WARNING+"Failed to get contents of <p>: "+type(err).__name__+ENDC)
-
+        header_tag_l1 = find_entity(By.TAG_NAME, "h1")
     if desc == "":
-        header_tag = ""
-        try:
-            header_tag = driver.find_element(By.TAG_NAME, "h1").text.strip()
-        except Exception as err:
-            print(WARNING+"Failed to get contents of <h1>: "+type(err).__name__+ENDC)
+        header_tag_l2 = find_entity(By.TAG_NAME, "h2")
+    if desc == "":
+        header_tag_l3 = find_entity(By.TAG_NAME, "h3")
+    if desc == "":
+        paragraph_tag = find_entity(By.TAG_NAME, "p")
+
 
     # Save current website to the database
     # Skip saving (and do not print any error) if the script just started and website is already in db.
@@ -293,11 +295,13 @@ while True:
             links.pop(index)
             continue
 
-        # Remove useless stuff (#, ?, &, :) from non-empty links
+        # Remove useless stuff (#, ?, &, :, etc.) from non-empty links
         link, sep, tail = link.partition('#')
         link, sep, tail = link.partition('?')
         link, sep, tail = link.partition('&')
         link, sep, tail = link.partition('%')
+        link, sep, tail = link.partition('~')
+        link, sep, tail = link.partition('@')
         link = link.strip("/")
         links[index] = link
 
