@@ -1,6 +1,5 @@
 pyvenv.cfg
 searchindex.db
 searchindex.db-journal
-bin/
 lib/
 lib64
